@@ -8,7 +8,7 @@ name: "isotope-squared"
 author: "Scamolor"
 
 #the fully qualified main class of the mod
-main: "isotopesquared.IsotopeSquared"
+main: "IsotopeSquared.Isotope"
 
 #the mod description as seen in the mod dialog
 description: "terrible ideas executed terribly"
