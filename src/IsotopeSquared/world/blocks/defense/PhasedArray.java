@@ -3,37 +3,28 @@ package IsotopeSquared.world.blocks.defense;
 import arc.*;
 import arc.graphics .*;
 import arc.graphics.g2d .*;
-import arc.graphics.gl.*;
-import arc.math .*;
+import arc.math.*;
 import arc.scene.ui.layout.*;
-import arc.struct .*;
-import arc.util.*;
-import arc.util.io .*;
-import mindustry .*;
-import mindustry.gen .*;
+import arc.struct.*;
+import arc.util.io.*;
+import mindustry.*;
+import mindustry.gen.*;
 import mindustry.graphics .*;
-import mindustry.world .*;
+import mindustry.world.*;
 import mindustry.world.meta .*;
 
 import static mindustry.Vars .*;
 
 public class PhasedArray extends Block{
-    protected static final Seq<PhasedArrayBuild> queue = new Seq<>();
-    protected static final Seq<PhasedArrayBuild> arrayMembers = new Seq<>();
-    protected static final IntSet processed = new IntSet();
-    //in tiles
-    public int maxDisplayDimensions = 12;
-
     public float discoveryTime = 60f * 10f;
     public float rotateSpeed = 2f;
     public float scanArc = 120f;
-
     public Color glowColor = Pal.turretHeat;
     public float glowScl = 5f, glowMag = 0.6f;
+    public TextureRegion edgeLight, edgeDark, cornerLight, cornerDark;
 
     public PhasedArray(String name){
         super(name);
-
         update = solid = true;
         flags = EnumSet.of(BlockFlag.hasFogRadius);
         outlineIcon = true;
@@ -43,60 +34,24 @@ public class PhasedArray extends Block{
         connectedPower = true;
     }
 
-    public static void LinkPhasedArrays(PhasedArrayBuild start){
-        PhasedArrayBuild root = null;
+    @Override
+    public void load() {
+        super.load();
+        edgeLight = Core.atlas.find(name + "-edge-light");
+        edgeDark = Core.atlas.find(name + "-edge-dark");
+        cornerLight = Core.atlas.find(name + "-corner-light");
+        cornerDark = Core.atlas.find(name + "-corner-dark");
 
-        int topX = start.tile.x, topY = start.tile.y, botX = start.tile.x, botY = start.tile.y;
-
-        queue.clear();
-        arrayMembers.clear();
-        processed.clear();
-
-        queue.add(start);
-        arrayMembers.add(start);
-
-        while(!queue.isEmpty()){
-            var next = queue.pop();
-            processed.add(next.id);
-
-            //assign root based on bottom leftmost position
-            if(root == null || next.tile.x < root.tile.x || next.tile.y < root.tile.y){
-                root = next;
-            }
-
-            topX = Math.max(next.tile.x, topX);
-            topY = Math.max(next.tile.y, topY);
-            botX = Math.min(next.tile.x, botX);
-            botY = Math.min(next.tile.y, botY);
-
-            for(var prox : next.proximity){
-                if(prox instanceof PhasedArrayBuild disp && processed.add(disp.id)){
-                    queue.add(disp);
-                    arrayMembers.add(disp);
-                }
-            }
-        }
-
-        int tilesWidth = topX - botX + 1, tilesHeight = topY - botY + 1;
-
-        for(var member : arrayMembers){
-            member.rootArrayMember = root;
-            member.tilesWidth = tilesWidth;
-            member.tilesHeight = tilesHeight;
-            member.originX = botX;
-            member.originY = botY;
-        }
     }
 
     public class PhasedArrayBuild extends Building{
-        //bottom left corner of display
         public PhasedArrayBuild rootArrayMember = this;
-
         public float progress;
         public float lastRadius = 0f;
         public float smoothEfficiency = 1f;
         public float totalProgress;
         public int tilesWidth = 1, tilesHeight = 1, originX, originY;
+        int mask = 0;
 
         @Override
         public float fogRadius(){
@@ -106,15 +61,12 @@ public class PhasedArray extends Block{
         @Override
         public void updateTile(){
             smoothEfficiency = Mathf.lerpDelta(smoothEfficiency, efficiency, 0.05f);
-
             if(Math.abs(fogRadius() - lastRadius) >= 0.5f){
                 Vars.fogControl.forceUpdate(team, this);
                 lastRadius = fogRadius();
             }
-
             progress += edelta() / discoveryTime;
             progress = Mathf.clamp(progress);
-
             totalProgress += efficiency * edelta();
         }
 
@@ -150,32 +102,48 @@ public class PhasedArray extends Block{
         @Override
         public void display(Table table){
             super.display(table);
+        }
+
+        @Override
+        public void draw() {
+            Draw.rect(region, x, y);
+            if ((mask & 1) == 0) Draw.rect("phased-array-edge-light", x, y, 0);
+            if ((mask & 2) == 0) Draw.rect("phased-array-edge-light", x, y, 270);
+            if ((mask & 4) == 0) Draw.rect("phased-array-edge-dark", x, y, 180);
+            if ((mask & 8) == 0) Draw.rect("phased-array-edge-dark", x, y, 90);
+        }
+
+
+        @Override
+        public void onProximityUpdate() {
+            super.onProximityUpdate();
+
+            // 1. Reset and find all connected pieces
+            Seq<PhasedArrayBuild> linked = new Seq<>();
+            getLinked(linked);
+
+            // 2. Find the min/max tile coordinates
+            int minX = tileX(), maxX = tileX();
+            int minY = tileY(), maxY = tileY();
+
+            for(PhasedArrayBuild b : linked) {
+                minX = Math.min(minX, b.tileX());
+                maxX = Math.max(maxX, b.tileX());
+                minY = Math.min(minY, b.tileY());
+                maxY = Math.max(maxY, b.tileY());
             }
+
+            // 3. Calculate final dimensions
+            tilesWidth = (maxX - minX) + 1;
+            tilesHeight = (maxY - minY) + 1;
         }
 
-        @Override
-        public void draw(){
-            Draw.rect(this.region, x, y);
-            Draw.blend();
-        }
-
-
-        @Override
-        public void onProximityAdded(){
-            super.onProximityAdded();
-
-            linkPhasedArrays(this);
-        }
-
-        @Override
-        public void onProximityRemoved(){
-            super.onProximityRemoved();
-
-            processed.clear();
-
-            for(var other : proximity){
-                if(other instanceof PhasedArrayBuild tl && !processed.contains(tl.id)){
-                    linkPhasedArrays(tl);
+        public void getLinked(Seq<PhasedArrayBuild> out){
+            out.add(this);
+            for(int i = 0; i < 4; i++){
+                Building b = nearby(i);
+                if(b instanceof PhasedArrayBuild && !out.contains((PhasedArrayBuild)b)){
+                    ((PhasedArrayBuild)b).getLinked(out);
                 }
             }
         }
