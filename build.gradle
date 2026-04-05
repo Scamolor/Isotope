@@ -75,9 +75,21 @@ jar{
     from{
         configurations.runtimeClasspath.collect{ it.isDirectory() ? it : zipTree(it) }
     }
+    doFirst {
+        println "--- Listing Files in Assets Directory ---"
+        fileTree("assets").visit { details ->
+            println "Found: ${details.relativePath}"
+        }
 
-    from(projectDir){
+        println "--- Listing Files in Project Root ---"
+        project.projectDir.listFiles().each { file ->
+            println "Root File: ${file.name}"
+        }
+    }
+    from(rootDir) {
         include "mod.hjson"
+        include "mod.json"
+        include "assets/**"
     }
 
     from("assets/"){
