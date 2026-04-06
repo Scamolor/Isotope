@@ -6,6 +6,7 @@ import arc.graphics.g2d .*;
 import arc.math.*;
 import arc.scene.ui.layout.*;
 import arc.struct.*;
+import arc.util.*;
 import arc.util.io.*;
 import mindustry.*;
 import mindustry.gen.*;
@@ -151,6 +152,10 @@ public class PhasedArray extends Block{
         public boolean isRoot(){
             return rootArrayMember == this;
         }
+    }
+
+    public boolean checkAutotileSame(Tile tile, @Nullable Tile other){
+        return other != null && other.block() == this;
     }
 }
 

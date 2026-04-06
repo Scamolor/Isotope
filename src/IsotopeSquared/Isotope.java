@@ -13,6 +13,6 @@ public class Isotope extends Mod{
     @Override
     public void loadContent() {
         Log.info("Loading Isotope content...");
-        ModBlocks.load();
+        Blocks.load();
     }
 }

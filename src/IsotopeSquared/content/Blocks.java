@@ -1,13 +1,10 @@
 package IsotopeSquared.content;
 
 import IsotopeSquared.world.blocks.defense.*;
-import arc.graphics.*;
-import arc.math.*;
 import mindustry.entities.bullet.*;
 import mindustry.entities.effect.*;
 import mindustry.gen.*;
 import mindustry.graphics.*;
-import mindustry.graphics.Shaders.*;
 import mindustry.type.*;
 import mindustry.world.*;
 import mindustry.world.blocks.defense.turrets.*;
@@ -20,12 +17,18 @@ import static arc.graphics.g2d.Lines.stroke;
 import static mindustry.content.Blocks.spectre;
 import static mindustry.type.ItemStack.with;
 
-public class ModBlocks{
+public class Blocks{
     public static Block
     //environment
     grateDetailed, plating, pipes, ferrous,
+    //production
+    serpuloElectrolysisThing, eutecticMixer,
+    //power
+    seamlessSolarTest,
+    //solar thermal
+    solarThermalTank, solarThermalTurbine, solarThermalMirror,
     //utility
-    phasedArray,
+    phasedArray, tarsBloonDock,
     //turrets
     icosphere, ignition, canopus, polaris, rigel;
 
