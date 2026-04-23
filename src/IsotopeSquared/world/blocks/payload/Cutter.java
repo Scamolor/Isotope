@@ -5,6 +5,7 @@ import arc.math.*;
 import arc.util.*;
 import arc.util.io.*;
 import mindustry.*;
+import mindustry.annotations.Annotations.*;
 import mindustry.content.*;
 import mindustry.ctype.*;
 import mindustry.entities.units.*;
@@ -31,6 +32,7 @@ public class Cutter extends PayloadBlock{
         payloadSpeed = payloadRotateSpeed = 2.5f;
         clipSize = 120;
         hasPower = true;
+        rotate = true;
     }
 
     @Override
@@ -59,6 +61,7 @@ public class Cutter extends PayloadBlock{
         public boolean hasConsumed;
         public Block originalWall, smallWall;
         public String smallName;
+
         public TextureRegion[] icons(){
             return new TextureRegion[]{region, outRegion, topRegion};
         }
@@ -75,7 +78,7 @@ public class Cutter extends PayloadBlock{
                 //Log.info(originalWall);
                 this.payload = null;
                 hasConsumed = true;
-            } else {
+            }else{
                 hasConsumed = false;
                 //Log.info("payload not consumed");
             }
@@ -96,7 +99,7 @@ public class Cutter extends PayloadBlock{
                 for(spawnedCounter = 1; spawnedCounter <= 4; spawnedCounter++){
                     if(progress / 0.25f >= (spawnedCounter + 1f)){
                         Fx.generatespark.at(x, y);
-                        this.movePayload(new BuildPayload(smallWall,this.team()));
+                        this.movePayload(new BuildPayload(smallWall, this.team()));
                         //Log.info("payload cut");
                         //Log.info(spawnedCounter);
                     }
@@ -108,7 +111,7 @@ public class Cutter extends PayloadBlock{
                     //Log.info("resetting");
                     hasConsumed = false;
                 }
-            } else {
+            }else{
                 if(this.payload != null && this.payload.content() != null){
                     if(this.payload.content().name.contains("wall") && this.payload.content().name.contains("large")){
                         //Log.info("block taken");
@@ -124,8 +127,6 @@ public class Cutter extends PayloadBlock{
         @Override
         public void draw(){
             Draw.rect(region, x, y);
-
-            //draw input
             boolean fallback = true;
             for(int i = 0; i < 4; i++){
                 if(blends(i) && i != rotation){
@@ -134,11 +135,8 @@ public class Cutter extends PayloadBlock{
                 }
             }
             if(fallback) Draw.rect(inRegion, x, y, rotation * 90);
-
             Draw.rect(outRegion, x, y, rotdeg());
-
             Draw.rect(topRegion, x, y);
-
             Draw.z(Layer.blockOver);
             drawPayload();
         }
@@ -162,4 +160,3 @@ public class Cutter extends PayloadBlock{
         }
     }
 }
-

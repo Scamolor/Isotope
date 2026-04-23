@@ -14,5 +14,6 @@ public class Isotope extends Mod{
     public void loadContent() {
         Log.info("Loading Isotope content...");
         Blocks.load();
+        UnitTypes.load();
     }
 }
